@@ -4,11 +4,39 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 
-URL = "https://divar.ir/s/tehran/car/peugeot/207i/automatic-p-tu5?q=207"
 SCROLL_PAUSE = 1.5  # seconds to wait after each scroll for new cards to load
 MAX_SCROLLS = 200  # hard cap so a stuck page can't loop forever
 STABLE_LIMIT = 3  # stop after this many scrolls in a row add zero new cards
+
+def search_divar() -> webdriver.Chrome:
+    options = Options()
+    # options.add_argument("--headless=new")
+    driver = webdriver.Chrome(options=options)
+
+    while True:
+        city: str = input("City: ")
+        query: str = input("Search: ")
+        url: str = f"https://divar.ir/s/{city}"
+        driver.get(url)
+
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        title = soup.select_one(".kt-page-title__title")
+        if title is not None and title.get_text(strip=True) == "این صفحه حذف شده یا وجود ندارد":
+            print("Wrong city")
+            continue
+
+        search_box = driver.find_element(By.NAME, "search")
+        search_box.clear()
+        search_box.send_keys(query)
+        search_box.send_keys(Keys.RETURN)
+
+        time.sleep(2)  # let results load
+        break
+
+    return driver
 
 
 def parse_cards(html: str) -> dict[str, dict[str, str]]:
@@ -40,32 +68,11 @@ def parse_cards(html: str) -> dict[str, dict[str, str]]:
     return rows
 
 
-def scrape(url: str) -> list[dict[str, str]]:
-    """Load the page, scroll to trigger lazy-loading, and collect all cards.
-
-    The list is virtualized - cards scrolled out of view can be removed
-    from the DOM - so we parse and accumulate after every scroll step
-    instead of only reading the page once at the end.
-    """
-    options = Options()
-    options.add_argument("--headless=new")
-
-    try:
-        driver = webdriver.Chrome(options=options)
-    except WebDriverException as e:
-        raise RuntimeError(
-            "Could not start Chrome. Make sure Chrome/Chromium is installed "
-            "and matches your selenium version."
-        ) from e
+def scrape(driver: webdriver.Chrome) -> list[dict[str, str]]:
 
     all_rows: dict[str, dict[str, str]] = {}
 
     try:
-        try:
-            driver.get(url)
-        except WebDriverException as e:
-            raise RuntimeError(f"Failed to load {url}") from e
-
         stable_rounds = 0
         last_count = 0
 
@@ -107,7 +114,7 @@ def save_csv(rows: list[dict[str, str]], path: str) -> None:
 
 if __name__ == "__main__":
     try:
-        data = scrape(URL)
+        data = scrape(search_divar())
     except RuntimeError as e:
         print(f"Scraping failed: {e}")
         raise SystemExit(1)
