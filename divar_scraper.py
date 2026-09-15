@@ -55,12 +55,12 @@ def parse_cards(html: str) -> dict[str, dict[str, str]]:
         # divar shows two description lines per card: mileage, then price.
         # Missing tags just mean this card is malformed - fall back to "".
         title = title_tag.get_text(strip=True) if title_tag else ""
-        km = desc_tags[0].get_text(strip=True) if len(desc_tags) > 0 else ""
+        description = desc_tags[0].get_text(strip=True) if len(desc_tags) > 0 else ""
         price = desc_tags[1].get_text(strip=True) if len(desc_tags) > 1 else ""
 
         rows[href] = {
             "title": title,
-            "km": km,
+            "description": description,
             "price": price,
             "link": "https://divar.ir" + href,
         }
@@ -107,7 +107,7 @@ def save_csv(rows: list[dict[str, str]], path: str) -> None:
         return
 
     with open(path, "w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(f, fieldnames=["title", "km", "price", "link"])
+        writer = csv.DictWriter(f, fieldnames=["title", "description", "price", "link"])
         writer.writeheader()
         writer.writerows(rows)
 
@@ -119,5 +119,5 @@ if __name__ == "__main__":
         print(f"Scraping failed: {e}")
         raise SystemExit(1)
 
-    save_csv(data, "divar_207.csv")
-    print(f"saved {len(data)} rows to divar_207.csv")
+    save_csv(data, "divar_export.csv")
+    print(f"saved {len(data)} rows to divar_export.csv")
