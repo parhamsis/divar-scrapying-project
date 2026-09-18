@@ -117,7 +117,6 @@ title,description,price,link
 ```text
 divar-scrapying-project/
 ├── divar_scraper.py    # Main scraper
-├── search.py           # Divar search utility
 ├── Pipfile             # Python dependencies
 ├── Pipfile.lock        # Locked dependency versions
 ├── LICENSE             # MIT license
@@ -144,9 +143,6 @@ Deduplicate by URL
 Export CSV
 ```
 
-### `search.py`
-
-A smaller Selenium-based utility for performing Divar searches and testing the search interface.
 
 ## Configuration
 
