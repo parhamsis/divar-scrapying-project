@@ -7,13 +7,13 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
-SCROLL_PAUSE = 1.5  # seconds to wait after each scroll for new cards to load
+SCROLL_PAUSE = 2  # seconds to wait after each scroll for new cards to load
 MAX_SCROLLS = 200  # hard cap so a stuck page can't loop forever
-STABLE_LIMIT = 3  # stop after this many scrolls in a row add zero new cards
+STABLE_LIMIT = 5  # stop after this many scrolls in a row add zero new cards
 
 def search_divar() -> webdriver.Chrome:
     options = Options()
-    # options.add_argument("--headless=new")
+    options.add_argument("--headless=new")
     driver = webdriver.Chrome(options=options)
 
     while True:
@@ -91,6 +91,16 @@ def scrape(driver: webdriver.Chrome) -> list[dict[str, str]]:
 
             if stable_rounds >= STABLE_LIMIT:
                 break
+
+            try:
+                button = driver.find_element(By.CSS_SELECTOR, "button.post-list__load-more-btn-be092")
+                print("Loading more ads!")
+                button.click()
+
+            except:
+                pass
+
+            print(f"{count} items found")
 
         # one last parse in case the final scroll loaded anything new
         all_rows.update(parse_cards(driver.page_source))
